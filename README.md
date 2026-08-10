@@ -103,15 +103,6 @@ python3 -m venv .venv
 - 심볼릭 링크, 확장자/매직바이트 불일치, 크기 초과 파일 거부
 - 정상 및 저대비 QR 인식
 
-의존성 보안 감사는 배포 또는 릴리스 전에 실행하세요.
-
-```bash
-.venv/bin/python -m pip install pip-audit
-.venv/bin/python -m pip_audit -r requirements.txt
-```
-
-GitHub Actions는 macOS에서 테스트와 `pip-audit`을 실행합니다. Dependabot은 런타임 의존성과 Actions 업데이트를 매주 제안합니다.
-
 ## 보안 제보
 
 취약점 제보 절차와 지원 범위는 [SECURITY.md](SECURITY.md)를 참고하세요. 공격 재현 정보나 악성 QR 샘플은 공개 이슈에 올리지 말고 비공개로 전달해 주세요.
