@@ -1,1 +1,117 @@
-# Secure_QR_Scanner
+# QR Guard — 오프라인 QR 코드 스캐너
+
+macOS용 데스크톱 QR 코드 이미지 스캐너입니다. 이미지에서 QR 데이터를 인식하고, URL에 포함된 **로컬 위험 신호**를 표시합니다.
+
+QR 링크를 분석하기 위해 웹사이트에 접속하거나 DNS를 조회하지 않습니다. 따라서 악성 QR이 검사 과정에서 내부망·공유기·NAS 등에 요청을 보내거나, 분석 자체로 사용자의 IP를 수집하는 문제를 피합니다.
+
+> **중요:** `검토 필요`는 “안전함”을 뜻하지 않습니다. 이 앱은 URL 평판, 웹페이지 내용, 실제 리다이렉트 목적지, 탈취된 정상 도메인을 검사하지 않습니다. 낯선 QR 링크는 열기 전에 독립적인 평판 서비스로 추가 확인하세요.
+
+## 화면과 기능
+
+- QR 이미지 선택 및 미리보기
+- 다중 QR 코드 인식
+- 흐린/저대비 QR을 위한 대비 보정, 이진화, 제한된 확대, 곡면 QR 시도
+- URL 위험 신호 표시
+  - `javascript:`, `data:`, `file:` 등 위험 URI 스킴
+  - 사설·루프백·예약 IP 주소
+  - HTTP 비암호화 URL
+  - 퓨니코드/유니코드 유사 도메인
+  - 브랜드 사칭, 단축 URL, 리다이렉트 파라미터, 복잡한 서브도메인
+- QR 텍스트 복사
+- 사용자 확인 후 OS 기본 브라우저에서 링크 열기
+  - `위험` 판정 링크와 내부 IP 링크는 열기 버튼이 제공되지 않습니다.
+  - `주의` 링크는 경고가 강화된 확인창을 거칩니다.
+
+## 빠른 실행
+
+### Finder에서 실행 — 권장
+
+Finder에서 `QR Scanner.command`를 더블클릭하세요. 처음 한 번만 격리된 Python 가상환경과 고정된 의존성을 설치합니다. macOS가 실행 확인을 표시하면 내용을 확인한 뒤 열기를 선택하세요.
+
+### 터미널에서 실행
+
+```bash
+cd QR_Scanner_Share
+chmod +x run_mac.sh
+./run_mac.sh
+```
+
+요구 환경은 macOS와 Python 3.10 이상입니다. `run_mac.sh`는 `requirements.txt` 및 Python 버전의 지문이 바뀌면 프로젝트 내부 `.venv`만 다시 만들며, 시스템 Python 패키지를 수정하지 않습니다.
+
+## 지원 이미지와 입력 제한
+
+| 항목 | 정책 |
+| --- | --- |
+| 형식 | PNG, JPEG, BMP, WebP, TIFF |
+| 파일 크기 | 최대 8MB |
+| 해상도 | 최대 16,000,000 픽셀 |
+| 파일 종류 | 일반 파일만 허용, 심볼릭 링크 거부 |
+| 형식 검증 | 확장자와 매직바이트가 일치해야 함 |
+
+선택한 파일은 안전한 파일 디스크립터로 한 번 읽은 뒤 메모리에서 처리합니다. QR 이미지와 QR 문자열을 분석 서버로 업로드하지 않습니다.
+
+## 보안 모델
+
+### 앱이 하는 일
+
+1. 사용자가 직접 고른 로컬 이미지의 형식·크기·파일 종류를 검증합니다.
+2. OpenCV로 QR 내용을 추출합니다.
+3. 네트워크 I/O 없이 URL 문자열의 위험 신호를 계산합니다.
+4. 결과를 표시합니다.
+5. 사용자가 링크 열기를 명시적으로 선택하고 확인한 경우에만 OS 기본 브라우저에 URL을 전달합니다.
+
+### 앱이 하지 않는 일
+
+- QR URL에 대한 자동 HTTP 요청, DNS 조회, SSL 검사, 리다이렉트 추적
+- 카메라, 마이크, 사진 보관함, 연락처, Apple Events 권한 요청
+- QR 이미지·결과·URL 기록 또는 원격 업로드
+- 위험 URL의 자동 열기
+
+### 브라우저 열기 시 알아둘 점
+
+브라우저 열기는 사용자가 시작하는 별도 동작입니다. 외부 브라우저는 이후 리다이렉트를 따르거나 네트워크에 연결할 수 있으므로, 표시된 URL과 경고를 확인한 뒤에만 진행하세요. 앱의 오프라인 분석은 브라우저가 연 실제 페이지를 보증하지 않습니다.
+
+## 프로젝트 구성
+
+```text
+QR_Scanner_Share/
+├── qr_scanner.py              # Tkinter UI, QR 인식, 로컬 URL 분석
+├── run_mac.sh                 # 가상환경 생성 및 실행
+├── QR Scanner.command         # Finder 더블클릭용 실행기
+├── requirements.txt           # 정확히 고정된 런타임 의존성
+├── tests/test_security.py     # 보안 및 QR 인식 회귀 테스트
+├── SECURITY.md                # 취약점 제보 정책과 보안 경계
+├── LICENSE                    # MIT License
+└── .github/
+    ├── dependabot.yml         # 의존성/Actions 업데이트 제안
+    └── workflows/ci.yml       # 테스트와 pip-audit CI
+```
+
+## 개발 및 검증
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install --only-binary=:all: -r requirements.txt
+.venv/bin/python -m unittest discover -s tests -v
+```
+
+테스트는 다음 보안 경계를 확인합니다.
+
+- 분석 코드가 DNS 등 네트워크 I/O를 수행하지 않음
+- 내부 IP, 위험 URI 스킴, 유사/사칭 도메인 처리
+- 위험 URL의 브라우저 열기 차단
+- 심볼릭 링크, 확장자/매직바이트 불일치, 크기 초과 파일 거부
+- 정상 및 저대비 QR 인식
+
+의존성 보안 감사는 배포 또는 릴리스 전에 실행하세요.
+
+```bash
+.venv/bin/python -m pip install pip-audit
+.venv/bin/python -m pip_audit -r requirements.txt
+```
+
+GitHub Actions는 macOS에서 테스트와 `pip-audit`을 실행합니다. Dependabot은 런타임 의존성과 Actions 업데이트를 매주 제안합니다.
+
+## 보안 제보
+
+취약점 제보 절차와 지원 범위는 [SECURITY.md](SECURITY.md)를 참고하세요. 공격 재현 정보나 악성 QR 샘플은 공개 이슈에 올리지 말고 비공개로 전달해 주세요.
